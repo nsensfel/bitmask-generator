@@ -112,7 +112,7 @@ class Device:
 					+ this.name.upper()
 					+ "_1_ADDR - "
 					+ this.name.upper()
-					+ "_0_ADDR) * (x))"
+					+ "_0_ADDR) * (x))\n"
 				)
 
 		for i in this.registers:
@@ -157,13 +157,13 @@ class Register:
 			if parent.instances == 1:
 				result += "#define " + long_name.upper() + "_ADDR \\\n"
 				result += "\t(" + parent.name + "_ADDR + " + long_name + "_ADDR_OFFSET)\n"
-				result += "#define " + long_name.upper() + "_ADDR \\\n"
+				result += "#define " + long_name.upper() + "_PTR \\\n"
 				result += "\t__TO_PTR(" + long_name.upper() + "_ADDR)\n"
 				result += "\n"
 			else:
 				result += "#define " + x_name + "_ADDR(x) \\\n"
 				result += "\t(" + parent.name + "_X_ADDR(x) + " + long_name + "_ADDR_OFFSET)\n"
-				result += "#define " + x_name_ + "_ADDR(x) \\\n"
+				result += "#define " + x_name + "_PTR(x) \\\n"
 				result += "\t__TO_PTR(" + x_name + "_ADDR(x))\n"
 				result += "\n"
 
@@ -392,6 +392,12 @@ class BitmaskGeneratorParser (Parser):
 
 		return Device(t.ID, t.register_definitions, t.NUMBER)
 
+	@_(r'DEVICE_KW NUMBER ID NUMBER NUMBER register_definitions EOP')
+	def file_entry (this, t):
+		BitmaskGeneratorParser.LAST_TOKEN = t
+
+		return Device(t.ID, t.register_definitions, t.NUMBER0, t.NUMBER1, t.NUMBER2)
+
 	#### REGISTER DEFINITIONS ###################################################
 	@_(r'')
 	def register_definitions (this, t):
@@ -430,7 +436,7 @@ class BitmaskGeneratorParser (Parser):
 	def register_definition (this, t):
 		BitmaskGeneratorParser.LAST_TOKEN = t
 
-		return Register(t.ID, t.members)
+		return Register(t.ID, t.member_definitions)
 
 	#### REGISTER DEFINITIONS ###################################################
 	@_(r'')
@@ -479,10 +485,11 @@ class BitmaskGeneratorParser (Parser):
 
 				file.close()
 
+print("#include <stdint.h>\n")
+print("#define __TO_PTR(x) ((volatile uint32_t *)(x))\n")
+print("// Generated using https://github.com/nsensfel/bitmask-generator\n")
 BitmaskGeneratorParser.parse_files(sys.argv[1:])
 
-print("#include <stdint.h>\n")
-print("#define __TO_PTR(x) ((volatile uint32_t *)(x))")
 for d in Device.LIST:
 	print(d.generate_code())
 Log.print_summary()
