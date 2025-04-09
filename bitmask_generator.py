@@ -221,6 +221,7 @@ class Register:
 
 		result += "#if (__USE_OF_BITFIELDS_UNION_IS_SAFE == 1)\n"
 		result += "\t#define " + short_name + "_TO_UINT32_T(s) ((s).reg_value)\n"
+		result += "\t#define " + short_name + "_TO_STRUCT(u, s_ptr) ((s_ptr)->reg_value = u)\n"
 		result += "#else\n"
 		result += "\t#define " + short_name + "_TO_UINT32_T(s) \\\n"
 		result += "\t\t( \\\n"
@@ -242,6 +243,21 @@ class Register:
 			current_level -= 1
 
 		result += "\t\t)\n"
+		result += "\t#define " + short_name + "_TO_STRUCT(u, s_ptr) \\\n"
+		result += "\t\t{ \\\n"
+
+		for (n, s) in this.fields:
+			result += (
+				"\t\t\t((s_ptr)->"
+				+ n
+				+ " = "
+				+ short_name
+				+ "_GET("
+				+ n.upper()
+				+ ", u)); \\\n"
+			)
+
+		result += "\t\t}\n"
 		result += "#endif\n"
 		result += "\n"
 
@@ -485,9 +501,16 @@ class BitmaskGeneratorParser (Parser):
 
 				file.close()
 
+print("#pragma once\n")
+print("// Generated using https://github.com/nsensfel/bitmask-generator\n")
 print("#include <stdint.h>\n")
 print("#define __TO_PTR(x) ((volatile uint32_t *)(x))\n")
-print("// Generated using https://github.com/nsensfel/bitmask-generator\n")
+print("// Bitfield behaviors are implementation defined. Don't use them unless")
+print("// the user knows their compiler behaves in an intuitive way.")
+print("#ifndef __USE_OF_BITFIELDS_UNION_IS_SAFE")
+print("\t#define __USE_OF_BITFIELDS_UNION_IS_SAFE 0")
+print("#endif\n")
+
 BitmaskGeneratorParser.parse_files(sys.argv[1:])
 
 for d in Device.LIST:
