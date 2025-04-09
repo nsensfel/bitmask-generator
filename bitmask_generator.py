@@ -112,7 +112,7 @@ class Device:
 					+ this.name.upper()
 					+ "_1_ADDR - "
 					+ this.name.upper()
-					+ "_0_ADDR) * (x))\n"
+					+ "_0_ADDR) * (x)))\n"
 				)
 
 		for i in this.registers:
@@ -184,10 +184,10 @@ class Register:
 
 		if (remains > 0):
 			result += "\t\t\tuint32_t _reserved:" + str(remains) + ";\n"
-		result += "\t\t}\n"
+		result += "\t\t};\n"
 		result += "\t\tuint32_t reg_value;\n"
-		result += "\t}\n"
-		result += "}\n"
+		result += "\t};\n"
+		result += "};\n"
 		result += "\n"
 		result += "#define " + short_name + "_GET(NAME, reg) \\\n"
 		result += (
